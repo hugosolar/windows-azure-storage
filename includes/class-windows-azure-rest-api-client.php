@@ -48,6 +48,7 @@ use MicrosoftAzure\Storage\Blob\Models\ListBlobsOptions;
 use MicrosoftAzure\Storage\Blob\Models\ListContainersOptions;
 use MicrosoftAzure\Storage\Blob\Models\SetBlobPropertiesOptions;
 use MicrosoftAzure\Storage\Blob\Models\SetBlobTierOptions;
+use MicrosoftAzure\Storage\Blob\Models\CreateBlockBlobOptions;
 
 class Windows_Azure_Rest_Api_Client {
 
@@ -985,10 +986,11 @@ class Windows_Azure_Rest_Api_Client {
 	 * @param string $local_path               Local path.
 	 * @param string $remote_path              Remote path.
 	 * @param bool   $force_direct_file_access Whether to force direct file access.
+	 * @param string $content_type             File content type
 	 *
 	 * @return bool|string|WP_Error Newly put blob URI or WP_Error|false on failure.
 	 */
-	public function put_blob( $container, $local_path, $remote_path, $force_direct_file_access = false ) {
+	public function put_blob( $container, $local_path, $remote_path, $force_direct_file_access = false, $content_type = 'application/octet-stream' ) {
 		$blobClient        = BlobRestProxy::createBlobService( $this->_connection_string );
 		$contents_provider = new Windows_Azure_File_Contents_Provider( $local_path, null );
 		$is_valid          = $contents_provider->is_valid();
@@ -998,10 +1000,12 @@ class Windows_Azure_Rest_Api_Client {
 		}
 
 		$blob_content = fopen( $contents_provider->get_file_path(), 'r' );
+		$blob_options = new CreateBlockBlobOptions();
+		$blob_options->setContentType( $content_type );
 
 		//Upload blob.
 		try {
-			$blobClient->createBlockBlob( $container, $remote_path, $blob_content );
+			$blobClient->createBlockBlob( $container, $remote_path, $blob_content, $blob_options );
 		} catch ( Exception $exception ) {
 			return new \WP_Error( $exception->getMessage() );
 		}
