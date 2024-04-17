@@ -85,7 +85,7 @@ class Windows_Azure_Replace_Media {
 			$form_fields['azure-media-replace'] = array(
 				'label' => esc_html__( 'Replace media', 'windows-azure-storage' ),
 				'input' => 'html',
-				'html'  => '<button class="button-secondary" id="azure-media-replacement" onclick="replaceMedia(' . $post->ID . ');">' . esc_html__( 'Replace this media', 'windows-azure-storage' ) . '</button>',
+				'html'  => sprintf( '<button class="button-secondary" id="azure-media-replacement" onclick="replaceMedia(%d);"> %s </button>', $post->ID, esc_html__( 'Replace this media', 'windows-azure-storage' ) ),
 			);
 		}
 	
@@ -125,15 +125,13 @@ class Windows_Azure_Replace_Media {
 		$nonce = sanitize_text_field( $_POST['nonce'] );
 
 		if ( ! wp_verify_nonce( $nonce, 'azure-storage-media-replace' ) ) {
-				die ( 'nope' );
+				wp_die( 'This action is not allowed' );
 		}
 
 		$current_attachment = filter_input( INPUT_POST, 'current_attachment', FILTER_VALIDATE_INT );
 		$replace_attachment = filter_input( INPUT_POST, 'replace_attachment', FILTER_VALIDATE_INT );
 
-		echo wp_json_encode( $this->replace_media_with( $current_attachment, $replace_attachment ) );
-
-		wp_die();
+		wp_send_json( $this->replace_media_with( $current_attachment, $replace_attachment ) );
 	}
 
 	/**
@@ -141,32 +139,32 @@ class Windows_Azure_Replace_Media {
 	 *
 	 * @param int $source_attachment_id Source attachment ID
 	 * @param int $media_to_replace_id Replacement file ID
-	 * @return Array
+	 * @return Mixed
 	 */
 	private function replace_media_with( $source_attachment_id, $media_to_replace_id ) {
 		if ( empty( $source_attachment_id ) || empty( $media_to_replace_id ) ) {
-			return __( 'Cannot determine images IDs, aborting...', 'windows-azure-storage' );
+			return esc_html__( 'Cannot determine images IDs, aborting...', 'windows-azure-storage' );
 		}
 
 		$source_file  = get_post_meta( $source_attachment_id, '_wp_attached_file', true );
 		$replace_file = get_post_meta( $media_to_replace_id, '_wp_attached_file', true );
 
 		if ( empty( $source_file ) || empty( $replace_file ) ) {
-			return __( 'Path issues, aborting...', 'windows-azure-storage' );
+			return esc_html__( 'Path issues, aborting...', 'windows-azure-storage' );
 		}
 
 		$source_filetype  = wp_check_filetype( $source_file );
 		$replace_filetype = wp_check_filetype( $replace_file );
 
 		if ( empty( $source_filetype['type'] ) && empty( $replace_filetype['type'] ) ) {
-			return __( 'Cannot determine file type, aborting...', 'windows-azure-storage' );
+			return esc_html__( 'Cannot determine file type, aborting...', 'windows-azure-storage' );
 		}
 
 		$source_media_type  = explode( '/', $source_filetype['type'] );
 		$replace_media_type = explode( '/', $replace_filetype['type'] );
 
 		if ( ( is_array( $source_media_type ) && is_array( $replace_filetype ) ) && ( $source_media_type[0] !== $replace_media_type[0] ) ) {
-			return __( 'File type mismatch', 'windows-azure-storage' );
+			return esc_html__( 'File type mismatch', 'windows-azure-storage' );
 		}
 
 		// Let's replace the file remotely
@@ -179,11 +177,13 @@ class Windows_Azure_Replace_Media {
 				\Windows_Azure_Helper::copy_media_to_blob_storage(
 					$default_azure_storage_account_container_name,
 					$replace_file,
-					$source_file
+					$source_file,
+					$replace_filetype['type']
 				);
 			}
 		} catch ( Exception $e ) {
-			echo '<p>', sprintf( __( 'Error in uploading file. Error: %s', 'windows-azure-storage' ), esc_html( $e->getMessage() ) ), '</p>';
+			// translators: %s would be an error message
+			printf( esc_html__( 'Error in uploading file. Error: %s', 'windows-azure-storage' ), esc_html( $e->getMessage() ) );
 		}
 
 		$replacement = array();
@@ -217,6 +217,7 @@ class Windows_Azure_Replace_Media {
 		$replacement_meta_attachment_file = get_post_meta( $media_to_replace_id, '_wp_attached_file', true );
 		$replacement_azure_data           = get_post_meta( $media_to_replace_id, 'windows_azure_storage_info', true );
 		$replacement_attachment_data      = get_post_meta( $media_to_replace_id, '_wp_attachment_metadata', true );
+		$replacement_mime_type            = get_post_mime_type( $media_to_replace_id );
 
 		$source_meta_attachment_file = get_post_meta( $source_attachment_id, '_wp_attached_file', true );
 		$source_azure_data           = get_post_meta( $source_attachment_id, 'windows_azure_storage_info', true );
@@ -262,10 +263,12 @@ class Windows_Azure_Replace_Media {
 								$default_azure_storage_account_container_name,
 								$thumbnails,
 								$new_filename,
+								$replacement_mime_type
 							);
 						}
 					} catch ( Exception $e ) {
-						echo '<p>', sprintf( __( 'Error in uploading file. Error: %s', 'windows-azure-storage' ), esc_html( $e->getMessage() ) ), '</p>';
+						// translators: %s would be an error message
+						printf( esc_html__( 'Error in uploading file. Error: %s', 'windows-azure-storage' ), esc_html( $e->getMessage() ) );
 					}
 				}
 

@@ -511,7 +511,7 @@ class Windows_Azure_Helper {
 	 *
 	 * @return bool|string|WP_Error False or WP_Error on failure URI on success.
 	 */
-	static public function copy_media_to_blob_storage( $container_name, $destination_path, $source_path, $account_name = '', $account_key = '' ) {
+	static public function copy_media_to_blob_storage( $container_name, $destination_path, $source_path, $mime_type, $account_name = '', $account_key = '' ) {
 		list( $account_name, $account_key ) = self::get_api_credentials( $account_name, $account_key );
 		$rest_api_client = new Windows_Azure_Rest_Api_Client( $account_name, $account_key );
 
