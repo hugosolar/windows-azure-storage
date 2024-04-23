@@ -410,13 +410,14 @@ class Windows_Azure_Helper {
 
 		$remote_path = self::get_unique_blob_name( $container_name, $blob_name );
 
-		$result = $rest_api_client->put_blob( $container_name, $local_path, $remote_path, true );
-		if ( ! $result || is_wp_error( $result ) ) {
-			return $result;
-		}
 		$finfo     = finfo_open( FILEINFO_MIME_TYPE );
 		$mime_type = finfo_file( $finfo, $local_path );
 		finfo_close( $finfo );
+
+		$result = $rest_api_client->put_blob( $container_name, $local_path, $remote_path, true, $mime_type );
+		if ( ! $result || is_wp_error( $result ) ) {
+			return $result;
+		}
 
 		$rest_api_client->put_blob_properties( $container_name, $remote_path, array(
 			Windows_Azure_Rest_Api_Client::API_HEADER_MS_BLOB_CONTENT_TYPE => $mime_type,
@@ -479,7 +480,7 @@ class Windows_Azure_Helper {
 		list( $account_name, $account_key ) = self::get_api_credentials( $account_name, $account_key );
 		$rest_api_client = new Windows_Azure_Rest_Api_Client( $account_name, $account_key );
 
-		$result = $rest_api_client->put_blob( $container_name, $local_path, $blob_name );
+		$result = $rest_api_client->put_blob( $container_name, $local_path, $blob_name, false, $mime_type );
 		if ( ! $result || is_wp_error( $result ) ) {
 			return $result;
 		}
