@@ -49,17 +49,7 @@ class Windows_Azure_Replace_Media {
 	 *
 	 * @var array
 	 */
-	private $allowed_types = apply_filters(
-		'azure_blob_storage_allowed_types_replace',
-		array(
-			'image/jpeg',
-			'image/png',
-			'image/gif',
-			'image/bmp',
-			'image/webp',
-			'application/pdf',
-		)
-	);
+	private $allowed_types = [];
 
 	/**
 	 * Class constructor
@@ -74,6 +64,19 @@ class Windows_Azure_Replace_Media {
 		// ajax event to replace media
 		add_action( 'wp_ajax_nopriv_azure-storage-media-replace', array( $this, 'process_media_replacement' ) );
 		add_action( 'wp_ajax_azure-storage-media-replace', array( $this, 'process_media_replacement' ) );
+
+		// Set allowed mime types to be replaced
+		$this->allowed_types = apply_filters(
+			'azure_blob_storage_allowed_types_replace',
+			array(
+				'image/jpeg',
+				'image/png',
+				'image/gif',
+				'image/bmp',
+				'image/webp',
+				'application/pdf',
+			)
+		);
 	}
 
 
