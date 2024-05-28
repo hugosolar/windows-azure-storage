@@ -1,4 +1,4 @@
-/*!  - v4.4.1
+/*!  - v4.4.2
  * https://github.com/10up/windows-azure-storage#readme
  * Copyright (c) 2024; */
 function generateCacheVar(length) {
