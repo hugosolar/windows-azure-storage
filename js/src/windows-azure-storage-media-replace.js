@@ -26,7 +26,6 @@ var replaceMedia = function(attachmentID) {
     },
     multiple: false
   }).on('select', function(){
-    console.log(mediaUploader.state().get( 'selection' ));
     var attachment = mediaUploader.state().get( 'selection' ).first().toJSON();
     jQuery.ajax({
       type: 'post',
