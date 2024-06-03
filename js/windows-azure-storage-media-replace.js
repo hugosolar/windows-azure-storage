@@ -29,6 +29,7 @@ var replaceMedia = function(attachmentID) {
     },
     multiple: false
   }).on('select', function(){
+    console.log(mediaUploader.state().get( 'selection' ));
     var attachment = mediaUploader.state().get( 'selection' ).first().toJSON();
     jQuery.ajax({
       type: 'post',
@@ -42,9 +43,11 @@ var replaceMedia = function(attachmentID) {
       dataType: 'JSON',
       beforeSend: function() {
         jQuery('.settings-save-status').find('.spinner').addClass('is-active');
+        jQuery('.edit-media-header').find('.media-modal-close').first().prop('disabled', true);
       },
       success: function(result) {
         jQuery('.settings-save-status').find('.spinner').removeClass('is-active');
+        jQuery('.edit-media-header').find('.media-modal-close').first().prop('disabled', false);
 
         var image = jQuery('.media-modal').find('.details-image').attr('src');
         var cacheVar = generateCacheVar(7);
@@ -67,10 +70,12 @@ var replaceMedia = function(attachmentID) {
   });
   
   mediaUploader.on('open', function(){
-    var tab = document.getElementById('menu-item-upload');
-    var browse = document.getElementById('menu-item-browse');
-    browse.style.display = 'none';
-    tab.click();
+    mediaUploader.reset();
+    var context = jQuery(mediaUploader.el);
+    var tab = context.find('#menu-item-upload');
+    var browse = context.find('#menu-item-browse');
+    browse.css('display', 'none');
+    tab.trigger('click');
   });
 
   mediaUploader.open();
