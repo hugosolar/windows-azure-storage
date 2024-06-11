@@ -51,6 +51,8 @@ class Windows_Azure_Replace_Media {
 	 */
 	private $allowed_types = [];
 
+	private $container_name = '';
+
 	/**
 	 * Class constructor
 	 *
@@ -146,6 +148,8 @@ class Windows_Azure_Replace_Media {
 		$current_attachment = filter_input( INPUT_POST, 'current_attachment', FILTER_VALIDATE_INT );
 		$replace_attachment = filter_input( INPUT_POST, 'replace_attachment', FILTER_VALIDATE_INT );
 
+		$this->container_name = \Windows_Azure_Helper::get_default_container();
+
 		wp_send_json( $this->replace_media_with( $current_attachment, $replace_attachment ) );
 	}
 
@@ -182,18 +186,18 @@ class Windows_Azure_Replace_Media {
 			return esc_html__( 'File type mismatch', 'windows-azure-storage' );
 		}
 
-		// Let's replace the file remotely
-		$default_azure_storage_account_container_name = \Windows_Azure_Helper::get_default_container();
-
 		// only upload file if file exists locally
 		try {
 			$full_blob_url = \Windows_Azure_Helper::get_full_blob_url( $replace_file );
 			if ( ! empty( $full_blob_url ) ) {
 				\Windows_Azure_Helper::copy_media_to_blob_storage(
-					$default_azure_storage_account_container_name,
+					$this->container_name,
 					$replace_file,
 					$source_file,
-					$replace_filetype['type']
+					$replace_filetype['type'],
+					'',
+					'',
+					0
 				);
 			}
 		} catch ( Exception $e ) {
@@ -204,7 +208,7 @@ class Windows_Azure_Replace_Media {
 		$replacement = array();
 		
 		$replacement['is_image']  = $this->is_image( $source_filetype );
-		$replacement['file_name'] = basename( $replacement['original_image'] );
+		$replacement['file_name'] = basename( $replace_file );
 		
 		$replacement = array_merge( $replacement, $this->media_meta_replacement_prepare( $source_attachment_id, $media_to_replace_id ) );
 
@@ -269,7 +273,6 @@ class Windows_Azure_Replace_Media {
 
 		$return_data = array();
 
-		$return_data['ID']     = $source_attachment_id;
 		$return_data['old_ID'] = $media_to_replace_id;
 
 		$return_replacement = $this->process_media_thumbnails( $source_data, $replace_data );
@@ -286,45 +289,37 @@ class Windows_Azure_Replace_Media {
 	 */
 	public function process_media_thumbnails( $source_data, $replace_data ) {
 		
-		unset( $source_data['meta_data']['sizes'] );
+		$sizes = $this->find_nearest_size( $source_data, $replace_data );
 		
-		if ( ! empty( $replace_data['meta_data']['sizes'] ) ) {
-			foreach ( $replace_data['meta_data']['sizes'] as $size_key => $size_data ) {
-				$size_data['file'] = str_replace( $replace_data['filename'], $source_data['filename'], $size_data['file'] );
-
-				$source_data['meta_data']['sizes'][ $size_key ] = $size_data;
+		if ( ! empty( $sizes ) ) {
+			foreach ( $sizes as $size_key => $size_data ) {
+				$source_data['meta_data']['sizes'][ $size_key ] = $size_data['source_data'];
 			}
 
 			update_post_meta( $source_data['id'], '_wp_attachment_metadata', $source_data['meta_data'] );
 		}
 
-		if ( ! empty( $replace_data['meta_azure']['thumbnails'] ) ) {
+		if ( ! empty( $replace_data['meta_data']['sizes'] ) ) {
 			// Remove previous thumbnails 
-			$this->delete_previous_thumbnails( $source_data );
+			// $this->delete_previous_thumbnails( $source_data );
 
 			// Let's replace the file remotely
-			$default_azure_storage_account_container_name = \Windows_Azure_Helper::get_default_container();
-			
-			unset( $source_data['meta_azure']['thumbnails'] );
-			
-			foreach ( $replace_data['meta_azure']['thumbnails'] as $thumbnail ) {
-				$new_filename                              = str_replace( $replace_data['filename'], $source_data['filename'], $thumbnail );
-				$source_data['meta_azure']['thumbnails'][] = $new_filename;
-
+			foreach ( $sizes as $source_size => $sizes_source_data ) {
 				try {
 					\Windows_Azure_Helper::copy_media_to_blob_storage(
-						$default_azure_storage_account_container_name,
-						$thumbnail,
-						$new_filename,
-						$replace_data['mime_type']
+						$this->container_name,
+						$sizes_source_data['replace_file'],
+						$sizes_source_data['source_file'],
+						$replace_data['mime_type'],
+						'',
+						'',
+						0,
 					);
 				} catch ( Exception $e ) {
 					// translators: %s would be an error message
 					printf( esc_html__( 'Error in uploading file. Error: %s', 'windows-azure-storage' ), esc_html( $e->getMessage() ) );
 				}
 			}
-
-			update_post_meta( $source_data['id'], 'windows_azure_storage_info', $source_data['meta_azure'] );
 		}
 
 		wp_delete_attachment( $replace_data['id'], true );
@@ -358,5 +353,65 @@ class Windows_Azure_Replace_Media {
 				}
 			}
 		}
+	}
+
+	/**
+	 * Get the nearest size from the replacement image
+	 *
+	 * @param array $source_sizes Source image data
+	 * @param array $target_sizes Replacement image data
+	 * @return array
+	 */
+	private function find_nearest_size( $source_sizes, $target_sizes ) {
+
+		$convert_sizes = array();
+		$filename_path = $source_sizes['meta_data']['file'];
+		$filename      = basename( $filename_path );
+		$file_path     = dirname( $filename_path );
+
+		foreach ( $source_sizes['meta_data']['sizes'] as $size => $size_data ) {
+			$target_width = ! empty( $target_sizes['meta_data']['sizes'][ $size ] ) ? $target_sizes['meta_data']['sizes'][ $size ]['width'] : 0;
+			$source_width = $size_data['width'];
+
+			$diff = abs( $source_width - $target_width );
+
+			$target_file            = $target_sizes['meta_data']['sizes'][ $size ];
+			$convert_sizes[ $size ] = array(
+				'source_file'  => $file_path . '/' . $size_data['file'],
+				'replace_file' => $file_path . '/' . $target_file['file'],
+				'source_data'  => array(
+					'file'      => $size_data['file'],
+					'width'     => $target_file['width'],
+					'height'    => $target_file['height'],
+					'mime-type' => $target_file['mime-type'],
+					'filesize'  => $target_file['filesize'],
+				),
+			);
+
+			foreach ( $target_sizes['meta_data']['sizes'] as $target_size => $target_data ) {
+				$target_width = $target_data['width'];
+				$source_width = $size_data['width'];
+
+				$new_diff = abs( $source_width - $target_width );
+
+				if ( $new_diff < $diff ) {
+					$diff = $new_diff;
+
+					$convert_sizes[ $size ] = array(
+						'source_file'  => $file_path . '/' . $size_data['file'],
+						'replace_file' => $file_path . '/' . $target_data['file'],
+						'source_data'  => array(
+							'file'      => $size_data['file'],
+							'width'     => $target_data['width'],
+							'height'    => $target_data['height'],
+							'mime-type' => $target_data['mime-type'],
+							'filesize'  => $target_data['filesize'],
+						),
+					);
+				}
+			}
+		}
+
+		return $convert_sizes;
 	}
 }

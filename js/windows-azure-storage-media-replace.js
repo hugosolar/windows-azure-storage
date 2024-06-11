@@ -29,7 +29,6 @@ var replaceMedia = function(attachmentID) {
     },
     multiple: false
   }).on('select', function(){
-    console.log(mediaUploader.state().get( 'selection' ));
     var attachment = mediaUploader.state().get( 'selection' ).first().toJSON();
     jQuery.ajax({
       type: 'post',
@@ -61,7 +60,7 @@ var replaceMedia = function(attachmentID) {
           medium_img = result.meta_data.sizes.thumbnail;
         }
 
-        jQuery('.attachments-wrapper').find('li[data-id="'+ result.ID +'"]').find('img').first().attr('src', medium_img + '?v=' + cacheVar );
+        jQuery('.attachments-wrapper').find('li[data-id="'+ result.id +'"]').find('img').first().attr('src', medium_img + '?v=' + cacheVar );
 
         jQuery('.attachments-wrapper').find('li[data-id="'+ result.old_ID +'"]').remove();
       }
