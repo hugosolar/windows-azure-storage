@@ -366,8 +366,10 @@ class Windows_Azure_Replace_Media {
 
 		$convert_sizes = array();
 		$filename_path = $source_sizes['meta_data']['file'];
-		$filename      = basename( $filename_path );
 		$file_path     = dirname( $filename_path );
+
+		$target_filename  = $target_sizes['meta_data']['file'];
+		$target_file_path = dirname( $target_filename );
 
 		foreach ( $source_sizes['meta_data']['sizes'] as $size => $size_data ) {
 			$target_width = ! empty( $target_sizes['meta_data']['sizes'][ $size ] ) ? $target_sizes['meta_data']['sizes'][ $size ]['width'] : 0;
@@ -378,7 +380,7 @@ class Windows_Azure_Replace_Media {
 			$target_file            = $target_sizes['meta_data']['sizes'][ $size ];
 			$convert_sizes[ $size ] = array(
 				'source_file'  => $file_path . '/' . $size_data['file'],
-				'replace_file' => $file_path . '/' . $target_file['file'],
+				'replace_file' => $target_file_path . '/' . $target_file['file'],
 				'source_data'  => array(
 					'file'      => $size_data['file'],
 					'width'     => $target_file['width'],
@@ -399,7 +401,7 @@ class Windows_Azure_Replace_Media {
 
 					$convert_sizes[ $size ] = array(
 						'source_file'  => $file_path . '/' . $size_data['file'],
-						'replace_file' => $file_path . '/' . $target_data['file'],
+						'replace_file' => $target_file_path . '/' . $target_data['file'],
 						'source_data'  => array(
 							'file'      => $size_data['file'],
 							'width'     => $target_data['width'],
