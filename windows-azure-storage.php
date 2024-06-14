@@ -166,10 +166,10 @@ add_action( 'media_upload_browse', 'windows_azure_browse_tab' );
 
 // Hooks for handling default file uploads.
 if ( Windows_Azure_Helper::get_use_for_default_upload() ) {
-	add_filter( 'wp_generate_attachment_metadata', 'windows_azure_storage_wp_generate_attachment_metadata', 9, 2 );
+	add_filter( 'wp_generate_attachment_metadata', 'windows_azure_storage_wp_generate_attachment_metadata', 10, 2 );
 
 	if ( Windows_Azure_Helper::delete_local_file() ) {
-		add_filter( 'wp_generate_attachment_metadata', 'windows_azure_storage_delete_local_files', 9, 2 );
+		add_filter( 'wp_generate_attachment_metadata', 'windows_azure_storage_delete_local_files', 10, 2 );
 	}
 
 	// Hook for handling blog posts via xmlrpc. This is not full proof check.
