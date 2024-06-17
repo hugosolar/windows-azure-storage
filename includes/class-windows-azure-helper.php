@@ -526,7 +526,7 @@ class Windows_Azure_Helper {
 			$cache_control = sprintf( "max-age=%d, must-revalidate", $cache_control );
 		}
 
-		$rest_api_client->put_blob_properties( $container_name, $destination_path, array(
+		$rest_api_client->put_blob_properties( $container_name, $source_path, array(
 			Windows_Azure_Rest_Api_Client::API_HEADER_MS_BLOB_CONTENT_TYPE  => $mime_type,
 			Windows_Azure_Rest_Api_Client::API_HEADER_MS_BLOB_CACHE_CONTROL => apply_filters( 'windows_azure_blob_cache_control', $cache_control ),
 			Windows_Azure_Rest_Api_Client::API_HEADER_MS_ACCESS_TIER        => apply_filters( 'windows_azure_blob_access_tier', 'Hot' ),

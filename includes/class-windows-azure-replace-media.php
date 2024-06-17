@@ -197,7 +197,7 @@ class Windows_Azure_Replace_Media {
 					$replace_filetype['type'],
 					'',
 					'',
-					0
+					30
 				);
 			}
 		} catch ( Exception $e ) {
@@ -313,7 +313,7 @@ class Windows_Azure_Replace_Media {
 						$replace_data['mime_type'],
 						'',
 						'',
-						0,
+						30,
 					);
 				} catch ( Exception $e ) {
 					// translators: %s would be an error message
