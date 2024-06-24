@@ -51,6 +51,11 @@ class Windows_Azure_Replace_Media {
 	 */
 	private $allowed_types = [];
 
+	/**
+	 * Container name from plugin config
+	 *
+	 * @var string
+	 */
 	private $container_name = '';
 
 	/**
@@ -64,10 +69,17 @@ class Windows_Azure_Replace_Media {
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_replace_media_script' ) );
 
 		// ajax event to replace media
-		add_action( 'wp_ajax_nopriv_azure-storage-media-replace', array( $this, 'process_media_replacement' ) );
 		add_action( 'wp_ajax_azure-storage-media-replace', array( $this, 'process_media_replacement' ) );
 
-		// Set allowed mime types to be replaced
+		/**
+		 * Set a list of mime types allowed to be replaced.
+		 *  
+		 * azure_blob_storage_allowed_types_replace filters the default list of mime types allowed to be replaced, for now just common images and pdf files.
+		 * 
+		 * @since 4.2.3
+		 * 
+		 * @param array $types array of allowed mime types
+		 */
 		$this->allowed_types = apply_filters(
 			'azure_blob_storage_allowed_types_replace',
 			array(
@@ -115,7 +127,7 @@ class Windows_Azure_Replace_Media {
 	 * @return void
 	 */
 	public function enqueue_replace_media_script() {
-		$js_ext  = ( ! defined( 'SCRIPT_DEBUG' ) || false === SCRIPT_DEBUG ) ? '.min.js' : '.js';
+		$js_ext = ( ! defined( 'SCRIPT_DEBUG' ) || false === SCRIPT_DEBUG ) ? '.min.js' : '.js';
 		wp_enqueue_script( 'windows-azure-storage-media-replace', MSFT_AZURE_PLUGIN_URL . 'js/windows-azure-storage-media-replace' . $js_ext, array( 'jquery', 'media-editor' ), MSFT_AZURE_PLUGIN_VERSION, true );
 		
 		wp_localize_script(
@@ -300,8 +312,6 @@ class Windows_Azure_Replace_Media {
 		}
 
 		if ( ! empty( $replace_data['meta_data']['sizes'] ) ) {
-			// Remove previous thumbnails 
-			// $this->delete_previous_thumbnails( $source_data );
 
 			// Let's replace the file remotely
 			foreach ( $sizes as $source_size => $sizes_source_data ) {
@@ -363,6 +373,14 @@ class Windows_Azure_Replace_Media {
 	 * @return array
 	 */
 	private function find_nearest_size( $source_sizes, $target_sizes ) {
+		// Bail early if no attachment meta field
+		if ( empty( $source_sizes['meta_data'] ) || empty( $target_sizes['meta_data'] ) ) {
+			return;
+		}
+
+		if ( empty( $source_sizes['meta_data']['file'] ) || empty( $target_sizes['meta_data']['file'] ) ) {
+			return;
+		}
 
 		$convert_sizes = array();
 		$filename_path = $source_sizes['meta_data']['file'];
@@ -370,6 +388,10 @@ class Windows_Azure_Replace_Media {
 
 		$target_filename  = $target_sizes['meta_data']['file'];
 		$target_file_path = dirname( $target_filename );
+
+		if ( empty( $source_sizes['meta_data']['sizes'] ) || empty( $target_sizes['meta_data']['sizes'] ) ) {
+			return;
+		}
 
 		foreach ( $source_sizes['meta_data']['sizes'] as $size => $size_data ) {
 			$target_width = ! empty( $target_sizes['meta_data']['sizes'][ $size ] ) ? $target_sizes['meta_data']['sizes'][ $size ]['width'] : 0;

@@ -509,6 +509,7 @@ class Windows_Azure_Helper {
 	 * @param string $source_path      Local path.
 	 * @param string $account_name   Account name.
 	 * @param string $account_key    Account key.
+	 * @param int    $cache          Max-age cache
 	 *
 	 * @return bool|string|WP_Error False or WP_Error on failure URI on success.
 	 */
