@@ -1,6 +1,6 @@
 === Microsoft Azure Storage for WordPress ===
 Contributors:      msopentech, 10up, morganestes, stevegrunwell, lpawlik, ritteshpatel, johnwatkins0, rickalee, eflorea, phyrax, ravichandra, jeffpaul
-Tags:              Microsoft, Microsoft Open Technologies, Microsoft Azure, Microsoft Azure Storage, Media Files, Upload, CDN, blob storage
+Tags:              Microsoft Azure Storage, Media Files, Upload, CDN, blob storage
 Tested up to:      6.5
 Stable tag:        4.4.2
 License:           BSD 2-Clause
