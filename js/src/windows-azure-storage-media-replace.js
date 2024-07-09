@@ -14,10 +14,9 @@ var alertMessage = function(message,status,fadeOutSeconds) {
   var alert = '<div class="notice notice-' + status + ' is-dismissible"><p>' + message + '</p></div>';
   var $alert = jQuery(alert).insertBefore('.attachment-info .settings-save-status');
 
-  // Fade out after 'fadeOutSeconds' seconds
   setTimeout(function() {
     $alert.fadeOut(function() {
-      $alert.remove(); // Remove the element from the DOM after fading out
+      $alert.remove();
     });
   }, fadeOutSeconds * 1000);
 }
