@@ -10,6 +10,18 @@ function generateCacheVar(length) {
   return result;
 }
 
+var alertMessage = function(message,status,fadeOutSeconds) {
+  var alert = '<div class="notice notice-' + status + ' is-dismissible"><p>' + message + '</p></div>';
+  var $alert = jQuery(alert).insertBefore('.attachment-info .settings-save-status');
+
+  // Fade out after 'fadeOutSeconds' seconds
+  setTimeout(function() {
+    $alert.fadeOut(function() {
+      $alert.remove(); // Remove the element from the DOM after fading out
+    });
+  }, fadeOutSeconds * 1000);
+}
+
 var replaceMedia = function(attachmentID) {
   var mediaUploader;
   
@@ -42,6 +54,13 @@ var replaceMedia = function(attachmentID) {
         jQuery('.edit-media-header').find('.media-modal-close').first().prop('disabled', true);
       },
       success: function(result) {
+        if ( ( 'success' in result )  && ( ! result.success ) ) {
+          jQuery('.settings-save-status').find('.spinner').removeClass('is-active');
+          jQuery('.edit-media-header').find('.media-modal-close').first().prop('disabled', false);
+          alertMessage(result.data, 'error', 5);
+          return;
+        }
+
         jQuery('.settings-save-status').find('.spinner').removeClass('is-active');
         jQuery('.edit-media-header').find('.media-modal-close').first().prop('disabled', false);
 
@@ -60,6 +79,15 @@ var replaceMedia = function(attachmentID) {
         jQuery('.attachments-wrapper').find('li[data-id="'+ result.id +'"]').find('img').first().attr('src', medium_img + '?v=' + cacheVar );
 
         jQuery('.attachments-wrapper').find('li[data-id="'+ result.old_ID +'"]').remove();
+      },
+      error: function(xhr, status, error) {
+        jQuery('.settings-save-status').find('.spinner').removeClass('is-active');
+        jQuery('.edit-media-header').find('.media-modal-close').first().prop('disabled', false);
+
+        var alertMessage = "Error: " + error + "\nStatus: " + status;
+        alertMessage(alertMessage, 'error', 5);
+
+        console.error("AJAX request failed: ", status, error);
       }
     });
     
