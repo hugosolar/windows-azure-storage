@@ -49,7 +49,7 @@ class Windows_Azure_Replace_Media {
 	 *
 	 * @var array
 	 */
-	private $allowed_types = [];
+	private $allowed_types = array();
 
 	/**
 	 * Container name from plugin config
@@ -74,7 +74,7 @@ class Windows_Azure_Replace_Media {
 		/**
 		 * Set a list of mime types allowed to be replaced.
 		 *
-		 * Azure_blob_storage_allowed_types_replace filters the default list of mime types allowed to be replaced, for now just common images and pdf files.
+		 * Filter azure_blob_storage_allowed_types_replace hook into default list of mime types allowed to be replaced, for now just common images and pdf files.
 		 *
 		 * @since 4.2.3
 		 *
